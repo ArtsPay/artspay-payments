@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>ArtsPay Hosted Payment Page: HTML + Ruby example</title>
+</head>
+<body>
+  <h1>ArtsPay Hosted Payment Page: HTML + Ruby example</h1>
+  <p>
+    Uses the iframe + postMessage integration method: no page navigation, the result arrives as a
+    browser event that this page sends to the server for verification before trusting it.
+  </p>
+
+  <div id="checkout">
+    <label>Amount (AUD) <input id="amount" value="10.25" /></label>
+    <button id="start" type="button">Pay with ArtsPay</button>
+  </div>
+
+  <iframe id="payment-frame" title="ArtsPay Checkout" style="display:none; width:100%; height:600px; border:0;"></iframe>
+
+  <div id="result"></div>
+
+  <script>
+    // Must match the environment used to build the checkout URL (sandbox
+    // shown here; swap to https://paynow.pmnts.io for live).
+    var PAYMENT_HOST = 'https://paynow.pmnts-sandbox.io';
+
+    function escapeHtml(value) {
+      return String(value == null ? '' : value).replace(/[&<>"']/g, function (char) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char];
+      });
+    }
+
+    document.getElementById('start').addEventListener('click', function () {
+      var amount = document.getElementById('amount').value;
+      fetch('/api/checkout-url?amount=' + encodeURIComponent(amount))
+        .then(function (res) { return res.json().then(function (data) { return { ok: res.ok, data: data }; }); })
+        .then(function (result) {
+          if (!result.ok) {
+            document.getElementById('result').textContent = result.data.error || 'Failed to start checkout';
+            return;
+          }
+          document.getElementById('checkout').style.display = 'none';
+          var frame = document.getElementById('payment-frame');
+          frame.src = result.data.url;
+          frame.style.display = 'block';
+        });
+    });
+
+    // Adapted from Fat Zebra's documented IFRAME/postMessage listener.
+    window.addEventListener('message', function (event) {
+      if (event.origin !== PAYMENT_HOST) return;
+
+      var payload = event.data;
+      if (typeof payload === 'string') {
+        // Older browsers deliver a query-string style payload instead of an object.
+        var pairs = payload.split('&');
+        payload = {};
+        for (var i = 0; i < pairs.length; i++) {
+          var kv = pairs[i].split('=');
+          payload[decodeURIComponent(kv[0])] = decodeURIComponent(kv[1] || '');
+        }
+      }
+      if (!payload || typeof payload !== 'object' || !('message' in payload)) return;
+
+      if (payload.message === 'transaction.cancelled') {
+        document.getElementById('payment-frame').style.display = 'none';
+        document.getElementById('checkout').style.display = 'block';
+        return;
+      }
+
+      if (payload.message !== 'transaction.complete') return;
+
+      var purchase = payload.data;
+
+      // The response is untrusted until the server confirms the signature;
+      // the shared secret needed to check it never reaches this page.
+      fetch('/api/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(purchase),
+      })
+        .then(function (res) { return res.json(); })
+        .then(function (result) {
+          var isSuccess = String(purchase.r) === '1';
+          document.getElementById('payment-frame').style.display = 'none';
+          document.getElementById('result').innerHTML =
+            '<h2>' + (isSuccess ? 'Payment successful' : 'Payment not successful') + '</h2>' +
+            '<p><strong>Response hash:</strong> ' +
+            (result.verified ? 'valid' : 'INVALID, do not trust this response') + '</p>' +
+            '<pre>' + escapeHtml(JSON.stringify(purchase, null, 2)) + '</pre>';
+        });
+    });
+  </script>
+</body>
+</html>

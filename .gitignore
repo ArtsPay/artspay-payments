@@ -1,0 +1,37 @@
+# Environment
+.env
+.env.local
+
+# Internal working notes, not for public consumption
+.notes/
+.scripts/
+
+# Generated zip bundles from .scripts/build-zip.js
+.scripts/output/
+
+# Node
+node_modules/
+npm-debug.log*
+dist/
+.next/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+
+# PHP
+vendor/
+.phpunit.cache/
+
+# Ruby
+/.bundle/
+
+# OS
+.DS_Store
+
+# Editors
+.vscode/
+.idea/

@@ -1,0 +1,12 @@
+{
+    "name": "artspay/hosted-payment-pages-react-php",
+    "description": "ArtsPay V3 Hosted Payment Page backend (PHP), pairs with the React frontend in this same folder",
+    "license": "MIT",
+    "require-dev": {
+        "phpunit/phpunit": "^13.3"
+    },
+    "scripts": {
+        "start": "php -S localhost:8000 server.php",
+        "test": "phpunit --testdox tests/"
+    }
+}

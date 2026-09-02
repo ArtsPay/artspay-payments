@@ -1,0 +1,20 @@
+{
+  "name": "artspay-hosted-payment-pages-react-php-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ArtsPay V3 Hosted Payment Page frontend (React), pairs with the PHP backend (server.php) in this same folder",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^6.1.1",
+    "vite": "^8.2.2"
+  }
+}

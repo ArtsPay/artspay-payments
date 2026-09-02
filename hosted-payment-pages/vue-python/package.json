@@ -1,0 +1,19 @@
+{
+  "name": "artspay-hosted-payment-pages-vue-python-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ArtsPay V3 Hosted Payment Page frontend (Vue), pairs with the Python backend (server.py) in this same folder",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "vue": "^3.5.42"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.8",
+    "vite": "^8.2.2"
+  }
+}
