@@ -1,6 +1,10 @@
 # Environment
 .env
 .env.local
+.env.production
+.env.preview
+.env.*
+!.env.example
 
 # Internal working notes, not for public consumption
 .notes/

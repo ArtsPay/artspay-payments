@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>ArtsPay Apple Pay & Google Pay: HTML + Node.js example</title>
+  <style>
+    #apple-pay-button {
+      -webkit-appearance: -apple-pay-button;
+      -apple-pay-button-type: buy;
+      -apple-pay-button-style: black;
+      width: 240px;
+      height: 44px;
+      display: none;
+      border: 0;
+    }
+    #google-pay-button { width: 240px; display: none; }
+  </style>
+</head>
+<body>
+  <h1>ArtsPay Apple Pay & Google Pay: HTML + Node.js example</h1>
+  <p>
+    Both wallets charge directly through ArtsPay's purchase API instead of the Hosted Payment Page.
+    Apple Pay only renders in Safari, over HTTPS, on a domain registered with Apple (see README).
+    Google Pay needs a browser the Google Pay API supports and a Google account with a saved card.
+  </p>
+  <p>
+    Sandbox responses are cent-based: the cents of the amount become the simulated response
+    code, e.g. <code>10.05</code> declines with code <code>05</code>, <code>10.00</code>
+    approves. See the <a href="https://artspay.com/docs/guides/apple-pay-web">Apple Pay</a> /
+    <a href="https://artspay.com/docs/guides/google-pay-web">Google Pay</a> guides' Testing
+    sections.
+  </p>
+
+  <label>Amount (AUD) <input id="amount" value="10.00" /></label><br /><br />
+
+  <button id="apple-pay-button" lang="en"></button>
+  <div id="google-pay-button"></div>
+
+  <div id="result"></div>
+
+  <script>
+    // Shared by both wallets below. Neither file depends on the other.
+    function escapeHtml(value) {
+      return String(value == null ? '' : value).replace(/[&<>"']/g, function (char) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char];
+      });
+    }
+    function getAmount() {
+      return document.getElementById('amount').value;
+    }
+    function makeReference() {
+      return 'order_' + Date.now();
+    }
+    function showResult(successful, data) {
+      document.getElementById('result').innerHTML =
+        '<h2>' + (successful ? 'Payment successful' : 'Payment not successful') + '</h2>' +
+        '<pre>' + escapeHtml(JSON.stringify(data, null, 2)) + '</pre>';
+    }
+  </script>
+
+  <!-- Remove this line (and google-pay.js) to drop Google Pay entirely. -->
+  <script src="/google-pay.js"></script>
+  <!-- Remove this line (and apple-pay.js) to drop Apple Pay entirely. -->
+  <script src="/apple-pay.js"></script>
+</body>
+</html>

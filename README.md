@@ -17,20 +17,23 @@ These are companions to the step-by-step guides at [artspay.com/docs/guides](htt
 | Integration | Examples |
 | :--- | :--- |
 | Hosted Payment Pages | [HTML + Node.js](hosted-payment-pages/html-node), [HTML + Python](hosted-payment-pages/html-python), [HTML + PHP](hosted-payment-pages/html-php), [HTML + Ruby](hosted-payment-pages/html-ruby), [React + Node.js](hosted-payment-pages/react-node), [React + Python](hosted-payment-pages/react-python), [React + PHP](hosted-payment-pages/react-php), [React + Ruby](hosted-payment-pages/react-ruby), [Vue + Node.js](hosted-payment-pages/vue-node), [Vue + Python](hosted-payment-pages/vue-python), [Vue + PHP](hosted-payment-pages/vue-php), [Vue + Ruby](hosted-payment-pages/vue-ruby), [Next.js](hosted-payment-pages/nextjs) |
+| Apple Pay & Google Pay | [HTML + Node.js](apple-google-pay/html-node) |
 
-More stacks and integrations (Apple Pay, Google Pay, Tokenisation, 3D Secure) will be added over time.
+More stacks and integrations (more Apple Pay & Google Pay stacks, Tokenisation, 3D Secure) will be added over time.
 
 ## Running an example
 
-Each example directory has its own README with everything needed, no need to read anything else first. There's no `.env` file to set up: open `server.js` / `server.py` / `server.php` / `server.rb` / `lib/config.js` and set `FZ_USERNAME` / `FZ_SHARED_SECRET` at the top to your ArtsPay **sandbox** credentials, never live ones. Left blank, the server still starts but returns a clear error instead of a broken checkout URL.
+Each example directory has its own README with everything needed, no need to read anything else first. There's no `.env` file to set up: open `server.js` / `server.py` / `server.php` / `server.rb` / `lib/config.js` and set your ArtsPay **sandbox** credentials at the top, never live ones. Hosted Payment Page examples take `FZ_USERNAME` / `FZ_SHARED_SECRET` (used to sign/verify the HPP request and response hashes); Apple Pay and Google Pay examples take `FZ_USERNAME` / `FZ_TOKEN` (your API token, used for HTTP Basic Auth against Fat Zebra's Gateway/PayNow APIs directly) -- these are two different credential pairs on your ArtsPay account, check each example's README for which it needs. Left blank, the server still starts but returns a clear error instead of a broken checkout URL.
 
 Every combo is one folder, matching how Stripe's own samples are structured, no `backend/`/`frontend/` split anywhere. The plain-HTML examples are a single process on `http://localhost:3000`. The React/Vue examples run two processes: the frontend is always `http://localhost:3000`, the backend is always `http://localhost:8000` (not 5000, that's claimed by macOS's AirPlay Receiver on most Macs). `npm install && npm start` runs both at once for the Node.js pairs (one `package.json` holds both sets of dependencies, `concurrently` runs both scripts, same as Stripe's own React+Node sample); the Python, PHP, and Ruby pairs need two terminals, since there's no equivalent to reach into those processes from an npm script. Either way, Vite proxies API calls to the backend, so the browser only ever talks to `:3000` and there's no CORS to think about.
 
 Next.js is the odd one out: it's not a frontend/backend combo, its own API routes (`app/api/`) are the backend, so it's a single process on `http://localhost:3000`, `npm install && npm run dev`, nothing to proxy.
 
+Apple Pay examples are the exception to all of the above: Apple Pay only runs in Safari, over HTTPS, on a domain registered with Apple, so `npm start` and a `localhost` visit will get the server running but won't render a working button -- see that example's README for the one-time domain registration steps needed first.
+
 ## Local development
 
-For working across several examples without hand-editing credentials into each one, `FZ_USERNAME` / `FZ_SHARED_SECRET` environment variables override the placeholder constants if set. Keep your sandbox credentials in a `.env` at the repo root (gitignored) and source it before running or testing an example:
+For working across several examples without hand-editing credentials into each one, `FZ_USERNAME` / `FZ_SHARED_SECRET` / `FZ_TOKEN` environment variables override the placeholder constants if set (which pair an example reads depends on its integration, see above). Keep your sandbox credentials in a `.env` at the repo root (gitignored) and source it before running or testing an example:
 
 ```sh
 set -a && source .env && set +a
