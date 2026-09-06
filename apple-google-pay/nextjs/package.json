@@ -1,0 +1,19 @@
+{
+  "name": "artspay-apple-google-pay-nextjs",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ArtsPay Apple Pay & Google Pay example (Next.js, frontend and backend in one app)",
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "test": "node --test --test-reporter=spec"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "next": "^16.3.4",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  }
+}
