@@ -4,7 +4,7 @@ const crypto = require('crypto');
 const { GoogleDeriveGatewayMerchantId } = require('../google-pay');
 
 test('derives gatewayMerchantId from username and lowercase sha256 of the API token', () => {
-  const username = 'arts-test-stateempire';
+  const username = 'artspay-username';
   const apiToken = 'some-api-token';
   const digest = crypto.createHash('sha256').update(apiToken).digest('hex').toLowerCase();
   const expected = `${username}-${digest.slice(0, 16)}`;
