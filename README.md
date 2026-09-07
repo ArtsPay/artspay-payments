@@ -18,8 +18,9 @@ These are companions to the step-by-step guides at [artspay.com/docs/guides](htt
 | :--- | :--- |
 | Hosted Payment Pages | [HTML + Node.js](hosted-payment-pages/html-node), [HTML + Python](hosted-payment-pages/html-python), [HTML + PHP](hosted-payment-pages/html-php), [HTML + Ruby](hosted-payment-pages/html-ruby), [React + Node.js](hosted-payment-pages/react-node), [React + Python](hosted-payment-pages/react-python), [React + PHP](hosted-payment-pages/react-php), [React + Ruby](hosted-payment-pages/react-ruby), [Vue + Node.js](hosted-payment-pages/vue-node), [Vue + Python](hosted-payment-pages/vue-python), [Vue + PHP](hosted-payment-pages/vue-php), [Vue + Ruby](hosted-payment-pages/vue-ruby), [Next.js](hosted-payment-pages/nextjs) |
 | Apple Pay & Google Pay | [HTML + Node.js](apple-google-pay/html-node), [HTML + Python](apple-google-pay/html-python), [React + Node.js](apple-google-pay/react-node), [React + Python](apple-google-pay/react-python), [Vue + Node.js](apple-google-pay/vue-node), [Vue + Python](apple-google-pay/vue-python), [Next.js](apple-google-pay/nextjs) |
+| Tokenisation | [HTML + Node.js](tokenisation/html-node), [HTML + Python](tokenisation/html-python), [React + Node.js](tokenisation/react-node), [React + Python](tokenisation/react-python), [Vue + Node.js](tokenisation/vue-node), [Vue + Python](tokenisation/vue-python), [Next.js](tokenisation/nextjs) |
 
-More stacks and integrations (more Apple Pay & Google Pay stacks, Tokenisation, 3D Secure) will be added over time.
+More stacks and integrations (more Apple Pay & Google Pay stacks, more Tokenisation stacks, 3D Secure) will be added over time.
 
 ## Running an example
 

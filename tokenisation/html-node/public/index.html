@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>ArtsPay Tokenisation: HTML + Node.js example</title>
+</head>
+<body>
+  <h1>ArtsPay Tokenisation: HTML + Node.js example</h1>
+  <p>
+    Two independent flows: saving a card via the Hosted Payment Page's tokenize-only mode
+    (no charge, no raw card number touches this server), and charging a previously saved token
+    directly through ArtsPay's purchase API, which is what a server does on its own for a
+    renewal.
+  </p>
+
+  <h2>1. Save a card</h2>
+  <div id="save-card">
+    <button id="start" type="button">Save a card</button>
+  </div>
+  <iframe id="payment-frame" title="ArtsPay Save Card" style="display:none; width:100%; height:600px; border:0;"></iframe>
+  <div id="save-result"></div>
+
+  <h2>2. Charge a saved token</h2>
+  <p>Paste in a token from step 1 (or one you already have) and charge it directly.</p>
+  <label>Token <input id="token-input" placeholder="e.g. fke8jmra" /></label><br /><br />
+  <label>Amount (AUD) <input id="charge-amount" value="10.00" /></label><br /><br />
+  <label><input id="recurring" type="checkbox" /> This is a subsequent recurring charge</label><br /><br />
+  <button id="charge" type="button">Charge token</button>
+  <div id="charge-result"></div>
+
+  <script>
+    // Must match the environment used to build the checkout URL (sandbox
+    // shown here; swap to https://paynow.pmnts.io for live).
+    var PAYMENT_HOST = 'https://paynow.pmnts-sandbox.io';
+
+    function escapeHtml(value) {
+      return String(value == null ? '' : value).replace(/[&<>"']/g, function (char) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char];
+      });
+    }
+
+    function showResult(elementId, successful, data) {
+      document.getElementById(elementId).innerHTML =
+        '<h3>' + (successful ? 'Success' : 'Not successful') + '</h3>' +
+        '<pre>' + escapeHtml(JSON.stringify(data, null, 2)) + '</pre>';
+    }
+
+    // 1. Save a card: same iframe + postMessage pattern as the Hosted
+    // Payment Pages example, just with tokenize_only=true on the backend.
+    document.getElementById('start').addEventListener('click', function () {
+      fetch('/api/checkout-url')
+        .then(function (res) { return res.json().then(function (data) { return { ok: res.ok, data: data }; }); })
+        .then(function (result) {
+          if (!result.ok) {
+            document.getElementById('save-result').textContent = result.data.error || 'Failed to start';
+            return;
+          }
+          document.getElementById('save-card').style.display = 'none';
+          var frame = document.getElementById('payment-frame');
+          frame.src = result.data.url;
+          frame.style.display = 'block';
+        });
+    });
+
+    window.addEventListener('message', function (event) {
+      if (event.origin !== PAYMENT_HOST) return;
+
+      var payload = event.data;
+      if (typeof payload === 'string') {
+        // Older browsers deliver a query-string style payload instead of an object.
+        var pairs = payload.split('&');
+        payload = {};
+        for (var i = 0; i < pairs.length; i++) {
+          var kv = pairs[i].split('=');
+          payload[decodeURIComponent(kv[0])] = decodeURIComponent(kv[1] || '');
+        }
+      }
+      if (!payload || typeof payload !== 'object' || !('message' in payload)) return;
+
+      // tokenize_only mode has its own message name, fz.tokenization.success,
+      // rather than the transaction.complete used by a normal purchase
+      // (confirmed against the sandbox; other messages like
+      // transaction.processing, form.invalid and resize are ignored here).
+      if (payload.message !== 'fz.tokenization.success') return;
+
+      var saved = payload.data;
+
+      // The response is untrusted until the backend confirms the signature;
+      // the shared secret needed to check it never reaches this page.
+      fetch('/api/verify-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(saved),
+      })
+        .then(function (res) { return res.json(); })
+        .then(function (result) {
+          document.getElementById('payment-frame').style.display = 'none';
+          showResult('save-result', result.verified, result);
+          if (result.verified && result.token) {
+            document.getElementById('token-input').value = result.token;
+          }
+        });
+    });
+
+    // 2. Charge a saved token directly, with the card-on-file fields from
+    // the Tokenisation guide when the "subsequent recurring charge" box is
+    // checked.
+    document.getElementById('charge').addEventListener('click', function () {
+      var body = {
+        cardToken: document.getElementById('token-input').value,
+        amount: document.getElementById('charge-amount').value,
+        reference: 'order_' + Date.now(),
+        recurring: document.getElementById('recurring').checked,
+      };
+      fetch('/api/charge-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+        .then(function (res) { return res.json().then(function (data) { return { ok: res.ok, data: data }; }); })
+        .then(function (result) {
+          showResult('charge-result', result.ok && result.data.successful, result.data);
+        });
+    });
+  </script>
+</body>
+</html>
