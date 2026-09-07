@@ -1,0 +1,11 @@
+/* fatzebra.js injects its own unstyled <iframe> inside #fz-paynow, with no
+   width/height of its own, so it falls back to the browser's default
+   iframe size (300x150) unless targeted directly. Sizing the container
+   alone isn't enough, since percentage sizing doesn't cascade onto a child
+   iframe automatically. */
+#fz-paynow iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}

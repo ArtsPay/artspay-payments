@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>ArtsPay 3D Secure (fatzebra.js): HTML + Node.js example</title>
+  <script src="https://cdn.pmnts-sandbox.io/sdk/v1/fatzebra.js"></script>
+  <style>
+    /* fatzebra.js injects its own unstyled <iframe> inside #fz-paynow, with
+       no width/height of its own, so it falls back to the browser's default
+       iframe size (300x150) unless targeted directly. Sizing the container
+       alone isn't enough, since percentage sizing doesn't cascade onto a
+       child iframe automatically. */
+    #fz-paynow iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <h1>ArtsPay 3D Secure (fatzebra.js): HTML + Node.js example</h1>
+  <p>
+    Renders ArtsPay's Hosted Payments Page through fatzebra.js with 3D Secure 2 enabled
+    (<code>enableSca: true</code>). fatzebra.js tokenizes the card, runs the 3DS2 check, then
+    submits the purchase itself: this page only reacts to its events, and the backend only
+    ever mints a short-lived OAuth token, it never sees the card or the purchase result
+    directly.
+  </p>
+  <p>
+    Enter one of the <a href="https://artspay.com/docs/guides/3d-secure#testing">3DS2 test
+    cards</a> from the guide to see a specific outcome (frictionless, step-up, decline).
+  </p>
+
+  <div id="checkout">
+    <label>Amount (AUD) <input id="amount" value="5.00" /></label>
+    <button id="start" type="button">Pay with ArtsPay</button>
+  </div>
+
+  <div id="fz-paynow" style="display:none; width:100%; height:600px; border:0;"></div>
+
+  <div id="result"></div>
+
+  <script>
+    function escapeHtml(value) {
+      return String(value == null ? '' : value).replace(/[&<>"']/g, function (char) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char];
+      });
+    }
+
+    // fz.validation.error / fz.sca.error don't carry a verification hash of
+    // their own (there's no transaction result yet to sign), so these are
+    // shown as-is rather than run through the response-verification step
+    // below.
+    function showSimpleResult(heading, data) {
+      document.getElementById('fz-paynow').style.display = 'none';
+      document.getElementById('checkout').style.display = 'block';
+      document.getElementById('result').innerHTML =
+        '<h2>' + escapeHtml(heading) + '</h2>' +
+        '<pre>' + escapeHtml(JSON.stringify(data, null, 2)) + '</pre>';
+    }
+
+    // fz.payment.success/fz.payment.error carry the full transaction result
+    // plus their own verification hash. The response is untrusted until the
+    // backend confirms it, the same way the plain Hosted Payment Page
+    // example verifies its response hash, since the shared secret needed to
+    // check it never reaches this page.
+    function verifyAndShowResult(data, successful) {
+      fetch('/api/verify-payment-result', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+        .then(function (res) { return res.json(); })
+        .then(function (result) {
+          document.getElementById('fz-paynow').style.display = 'none';
+          document.getElementById('result').innerHTML =
+            '<h2>' + (successful ? 'Payment successful' : 'Payment not successful') + '</h2>' +
+            '<p><strong>Response hash:</strong> ' +
+            (result.verified ? 'valid' : 'INVALID, do not trust this response') + '</p>' +
+            '<pre>' + escapeHtml(JSON.stringify(data, null, 2)) + '</pre>';
+        });
+    }
+
+    document.getElementById('start').addEventListener('click', function () {
+      var amount = document.getElementById('amount').value;
+
+      fetch('/api/checkout-config?amount=' + encodeURIComponent(amount))
+        .then(function (res) { return res.json().then(function (data) { return { ok: res.ok, data: data }; }); })
+        .then(function (result) {
+          if (!result.ok) {
+            document.getElementById('result').textContent = result.data.error || 'Failed to start checkout';
+            return;
+          }
+
+          var config = result.data;
+
+          // fatzebra.js reads this out of localStorage itself; there's no
+          // constructor option to pass it in directly.
+          localStorage.setItem('fz-access-token', config.accessToken);
+
+          document.getElementById('checkout').style.display = 'none';
+          document.getElementById('fz-paynow').style.display = 'block';
+
+          var fz = new FatZebra({ username: config.username });
+
+          // fz.on() fires with a real native CustomEvent, not a plain object:
+          // the actual payload is nested under event.detail (confirmed
+          // against the sandbox), not event.data directly as the SDK docs'
+          // own JSON examples imply.
+          fz.on('fz.validation.error', function (event) { showSimpleResult('Validation error', event.detail); });
+          fz.on('fz.sca.error', function (event) { showSimpleResult('3DS check failed', event.detail); });
+          fz.on('fz.payment.success', function (event) { verifyAndShowResult(event.detail.data, true); });
+          fz.on('fz.payment.error', function (event) { verifyAndShowResult(event.detail.data, false); });
+
+          fz.renderPaymentsPage({
+            containerId: 'fz-paynow',
+            customer: {
+              firstName: 'Test',
+              lastName: 'Customer',
+              email: 'hello.world@example.com',
+              address: '123 Australia Blvd.',
+              city: 'Sydney',
+              postcode: '2000',
+              state: 'NSW',
+              country: 'AU',
+            },
+            paymentIntent: {
+              payment: { amount: config.amountCents, currency: config.currency, reference: config.reference },
+              verification: config.verification,
+            },
+            options: { hideLogos: true, enableSca: true },
+          });
+        });
+    });
+  </script>
+</body>
+</html>
